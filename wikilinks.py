@@ -2,7 +2,7 @@ import requests
 import random
 import sys
 
-test = []
+visited = []
 def wikilinks(term, depth, lastpages):
     results = []
     apilink = f'https://he.wikipedia.org/w/api.php?action=query&format=json&titles={term}&prop=links&pllimit=max'
@@ -10,10 +10,12 @@ def wikilinks(term, depth, lastpages):
     pageid = list(res["query"]["pages"].keys())[0]
     pagetitle = res["query"]["pages"][pageid]["title"]
     print(pageid + " - " + pagetitle)
-    if pageid in lastpages or pagetitle[0:6] == "תבנית:":
+    # Check if link is miising page or model page
+    if pageid == "-1" or pagetitle[0:6] == "תבנית:": 
         return "Same"
-    if pageid == "-1":
-        test.append(1)
+    # Check if link was already visited and add to visited list
+    if pageid in lastpages:
+        visited.append(1)
         return "Same"
     lastpages.append(pageid)
     links = res["query"]["pages"][pageid]["links"]
@@ -25,7 +27,8 @@ def wikilinks(term, depth, lastpages):
             print(f'New term: {newterm}') 
             nextpage = wikilinks(newterm,depth-1,lastpages)
             if not isinstance(nextpage,list):
-                print(nextpage)
+                print("Some error - skipping")
+            # If some got some error (missing page or whatever) try again until no error
             while nextpage == "Same":
                 nextpage = wikilinks(results[random.randrange(0,len(results))],depth-1,lastpages)
             results.extend(nextpage)
@@ -41,4 +44,4 @@ if __name__ == '__main__':
     link_list = wikilinks(term,3,[])
     print(f'Got {len(link_list)} total links')
     print (f'Got {len(set(link_list))} unique links')
-    print(f"Tried to revisit a link {len(test)} times")
+    print(f"Tried to revisit a link {len(visited)} times")
